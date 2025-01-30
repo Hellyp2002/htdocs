@@ -41,4 +41,3 @@ if ($result) {
     echo json_encode(array("success" => false));
 }
 ?>
-.jkk
