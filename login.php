@@ -1,60 +1,53 @@
-
-
 <?php
-header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type");
 
-$servername = "localhost"; // Replace with your server name
-$username = "root";        // Replace with your database username
-$password = "1234";            // Replace with your database password
-$dbname = "handy_library"; // Replace with your database name
+$servername = "localhost";
+$username = "root";
+$password = "1234";
+$dbname = "handy_library";
 
-// Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// Check connection
 if ($conn->connect_error) {
-    die(json_encode(['status' => 'error', 'message' => 'Database connection failed']));
+    die(json_encode(["success" => false, "message" => "Database connection failed"]));
 }
 
-// Get data from POST request
-$username = $_POST['username'];
-$password = $_POST['password'];
-$role = $_POST['role'];
+$data = json_decode(file_get_contents("php://input"));
 
-// Validate inputs
-if (empty($email) || empty($password) || empty($role)) {
-    echo json_encode(['status' => 'error', 'message' => 'All fields are required']);
-    exit();
-}
+if (isset($data->email) && isset($data->password)) {
+    $email = $conn->real_escape_string($data->email);
+    $password = $data->password;
 
-// Determine the table based on the role
-$table = '';
-if ($role === 'College') {
-    $table = 'college';
-} elseif ($role === 'Student') {
-    $table = 'student';
-} elseif ($role === 'University') {
-    $table = 'university';
-}
+    $sql = "SELECT * FROM users WHERE email='$email'";
+    $result = $conn->query($sql);
 
-// Check if the user exists
-$sql = "SELECT * FROM $table WHERE email = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $email);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows > 0) {
-    $user = $result->fetch_assoc();
-    if (password_verify($password, $user['password'])) {
-        echo json_encode(['status' => 'success', 'message' => 'Login successful', 'role' => $role]);
+    if ($result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        if (password_verify($password, $user["password"])) {
+            echo json_encode([
+                "success" => true,
+                "message" => "Login successful",
+                "user" => [
+                    "id" => $user["id"],
+                    "name" => $user["uni_or_clg_name"],
+                    "email" => $user["email"],
+                    "username" => $user["username"],
+                    "phone" => $user["phone"],
+                    "location" => $user["location"],
+                    "user_type" => $user["user_type"]
+                ]
+            ]);
+        } else {
+            echo json_encode(["success" => false, "message" => "Invalid credentials"]);
+        }
     } else {
-        echo json_encode(['status' => 'error', 'message' => 'Incorrect password']);
+        echo json_encode(["success" => false, "message" => "User not found"]);
     }
 } else {
-    echo json_encode(['status' => 'error', 'message' => 'User not found']);
+    echo json_encode(["success" => false, "message" => "Invalid request"]);
 }
 
-$stmt->close();
 $conn->close();
 ?>

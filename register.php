@@ -1,46 +1,44 @@
 <?php
-header('Content-Type: application/json');
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Headers: Content-Type");
 
-$servername = "localhost"; // Replace with your server name
-$username = "root";        // Replace with your database username
-$password = "1234";            // Replace with your database password
-$dbname = "handy_library"; // Replace with your database name
+include '../api/conn.php';
 
-// Create a connection
-$conn = new mysqli($servername, $username, $password, $dbname);
+// Get the data from POST request
+$uniname = $_POST['university_name'];
+$uniemail = $_POST['uni_email'];
+$unilocation = $_POST['uni_location'];
+$uniusername = $_POST['uni_username'];
+$unipassword = $_POST['uni_password'];
 
-// Check connection
-if ($conn->connect_error) {
-    die(json_encode(['status' => 'error', 'message' => 'Database connection failed']));
-}
+$clgname = $_POST['clg_name'];
+$clgemail = $_POST['clg_email'];
+$clglocation = $_POST['clg_location'];
+$clgusername = $_POST['clg_username'];
+$clgpassword = $_POST['clg_password'];
 
-// Get data from POST request
-$university = $_POST['university'];
-$email = $_POST['email'];
-$location = $_POST['location'];
-$password = $_POST['password'];
-$username = $_POST['username'];
+// Get the user type from the request (university or college)
+$user_type = $_POST['user_type']; // "university" or "college"
 
-// Validate inputs
-if (empty($university) || empty($email) || empty($location) || empty($password) || empty($username)) {
-    echo json_encode(['status' => 'error', 'message' => 'All fields are required']);
-    exit();
-}
-
-// Hash the password
-$hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-
-// Insert data into the database
-$sql = "INSERT INTO users (university, email, location, password, username) VALUES (?, ?, ?, ?, ?)";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("sssss", $university, $email, $location, $hashedPassword, $username);
-
-if ($stmt->execute()) {
-    echo json_encode(['status' => 'success', 'message' => 'User registered successfully']);
+// Conditional SQL queries based on user type
+if ($user_type == 'university') {
+    $sqlquery = "INSERT INTO university SET university_name = '$uniname', email  = '$uniemail', location = '$unilocation', username = '$uniusername', password = '$unipassword'";
+} else if ($user_type == 'college') {
+    $sqlquery = "INSERT INTO college SET name = '$clgname', email  = '$clgemail', location = '$clglocation', username = '$clgusername', password = '$clgpassword'";
 } else {
-    echo json_encode(['status' => 'error', 'message' => 'Registration failed']);
+    echo json_encode(array("success" => false, "message" => "Invalid user type"));
+    exit;
 }
 
-$stmt->close();
-$conn->close();
+// Execute the query
+$result = $connectNow->query($sqlquery);
+
+// Respond based on the result
+if ($result) {
+    echo json_encode(array("success" => true));
+} else {
+    echo json_encode(array("success" => false));
+}
 ?>
+.jkk

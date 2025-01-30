@@ -1,5 +1,6 @@
 <?php
 
+header("Access-Control-allow-origin");
 // Database credentials
 $host = 'localhost';
 $username = 'root';
@@ -15,5 +16,4 @@ if ($conn->connect_error) {
 } else {
     echo "Connected successfully";
 }
-
 ?>
